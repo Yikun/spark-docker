@@ -17,7 +17,7 @@
 # under the License.
 #
 
-name: Main (Build/Test/Publish) - test2
+name: Main (Build/Test/Publish) - test3
 
 on:
   workflow_call:
@@ -64,7 +64,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: yikun
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate tags
