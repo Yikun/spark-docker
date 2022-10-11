@@ -17,7 +17,7 @@
 # under the License.
 #
 
-name: Main (Build/Test/Publish) - test1
+name: Main (Build/Test/Publish) - test2
 
 on:
   workflow_call:
