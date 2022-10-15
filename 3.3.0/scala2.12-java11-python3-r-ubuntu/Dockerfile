@@ -33,8 +33,10 @@ RUN set -ex && \
     rm /bin/sh && \
     ln -sv /bin/bash /bin/sh && \
     echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su && \
-    chgrp root /etc/passwd && chmod ug+rw /etc/passwd && \
     rm -rf /var/cache/apt/*
+
+RUN groupadd --system --gid=1185 spark && \
+    useradd --system --home-dir /opt/spark/ --uid=1185 --gid=spark spark
 
 # Install Apache Spark
 # https://downloads.apache.org/spark/KEYS
@@ -80,5 +82,3 @@ RUN chmod a+x /opt/entrypoint.sh
 
 ENTRYPOINT [ "/opt/entrypoint.sh" ]
 
-# Specify the User that the actual main process will run as
-USER ${spark_uid}
