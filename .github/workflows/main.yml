@@ -115,7 +115,7 @@ jobs:
         with:
           fetch-depth: 0
           repository: apache/spark
-          ref: v${{ matrix.spark_version }}
+          ref: v3.3.1-rc4
           path: ${{ github.workspace }}/spark
 
       - name: Test - Cherry pick commits
