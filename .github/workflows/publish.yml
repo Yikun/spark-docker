@@ -48,13 +48,8 @@ on:
       repository:
         description: The registry to be published (Avaliable only when publish is true).
         required: false
-        default: ghcr.io/apache/spark-docker
-        type: choice
-        options:
-        # This required the write permission of apache/spark-docker (Spark Committer)
-        - ghcr.io/apache/spark-docker
-        # This required the DOCKERHUB_TOKEN and DOCKERHUB_USER
-        - apache
+        default: ghcr.io/yikun/spark-docker
+        type: string
 
 jobs:
   run-build:
