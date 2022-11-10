@@ -43,6 +43,7 @@ on:
 
 jobs:
   run-build:
+    name: "Publish ${{ inputs.repository }} (${{ matrix.spark_version }}, ${{ matrix.scala_version }}, ${{ matrix.java_version }}, ${{ matrix.image_suffix }})"
     # if: startsWith(inputs.spark, '3.3')
     strategy:
       matrix:
