@@ -50,7 +50,6 @@ on:
 
 jobs:
   main:
-    name: "Build (${{ matrix.spark_version }}-scala${{ matrix.scala_version }}-java${{ matrix.java_version }}-${{ matrix.image_suffix }} ${{ inputs.repository }}"
     runs-on: ubuntu-latest
     # Due to the multi-platform images cannot be exported with the `docker` export type,
     # https://github.com/docker/buildx/issues/59
