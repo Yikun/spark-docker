@@ -43,7 +43,6 @@ on:
 
 jobs:
   run-build:
-    name: "Publish ${{ inputs.repository }} (${{ matrix.spark_version }}, ${{ matrix.scala_version }}, ${{ matrix.java_version }}, ${{ matrix.image_suffix }})"
     # if: startsWith(inputs.spark, '3.3')
     strategy:
       matrix:
@@ -51,7 +50,7 @@ jobs:
         java: [11]
     permissions:
       packages: write
-    name: Run
+    name: "Publish ${{ inputs.repository }} (${{ inputs.spark_version }}, ${{ matrix.scala_version }}, ${{ matrix.java_version }})"
     secrets: inherit
     uses: ./.github/workflows/main.yml
     with:
