@@ -50,7 +50,7 @@ jobs:
         java: [11]
     permissions:
       packages: write
-    name: "Publish ${{ inputs.repository }} (${{ inputs.spark_version }}, ${{ matrix.scala_version }}, ${{ matrix.java_version }})"
+    name: "Publish ${{ inputs.repository }}"
     secrets: inherit
     uses: ./.github/workflows/main.yml
     with:
