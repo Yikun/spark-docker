@@ -26,6 +26,7 @@ RUN set -ex && \
 	groupadd --system --gid=${spark_uid} spark && \
 	useradd --system --uid=${spark_uid} --gid=spark spark && \
     mkdir -p /opt/spark && \
+    mkdir /opt/spark/python && \
     mkdir -p /opt/spark/examples && \
     mkdir -p /opt/spark/work-dir && \
     touch /opt/spark/RELEASE && \
