@@ -40,26 +40,37 @@ on:
         default: 2.12
         type: string
         required: true
-      tag:
-        description: 'The tag of Spark image.'
-        default: latest
-        type: string
-        required: true
       repository:
         description: The registry to be validated.
-        required: true
-        default: openeuler
+        required: false
         type: string
+        default: openeuler
+      image-type:
+        description: 'The image type of Spark image.'
+        required: true
+        default: 'python'
+        type: choice
+        options:
+        - all
+        - python
+        - scala
+        - r
+      image-tag:
+        description: 'The image tag of Spark image.'
+        default: 3.3.1-22.03-lts
+        type: string
+        required: true
 
 jobs:
   run-build:
-    name: Run
+    name: Test ${{ inputs.repository }}/spark:${{ inputs.image-tag }}
     secrets: inherit
     uses: ./.github/workflows/main.yml
     with:
       spark: ${{ inputs.spark }}
-      scala: ${{ matrix.scala }}
-      java: ${{ matrix.java }}
-      publish: ${{ inputs.publish }}
+      scala: ${{ inputs.scala }}
+      java: ${{ inputs.java }}
       repository: ${{ inputs.repository }}
-      image: ${{ matrix.image }}
+      image-tag: ${{ inputs.image-tag }}
+      image-type: ${{ inputs.image-type }}
+      build: false

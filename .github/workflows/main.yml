@@ -37,6 +37,11 @@ on:
         required: true
         type: string
         default: 11
+      build:
+        description: Build the image or not.
+        required: false
+        type: boolean
+        default: true
       publish:
         description: Publish the image or not.
         required: false
@@ -47,11 +52,16 @@ on:
         required: false
         type: string
         default: ghcr.io/apache/spark-docker
-      image:
+      image-type:
         description: The image type of the image (all, python, scala, r).
         required: false
         type: string
         default: all
+      image-tag:
+        type: string
+        description: The image tag to be validated.
+        required: false
+        default: latest
 
 jobs:
   main:
@@ -69,18 +79,9 @@ jobs:
       - name: Checkout Spark Docker repository
         uses: actions/checkout@v2
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        with:
-          # This required by local registry
-          driver-opts: network=host
-
       - name: Generate tags
         run: |
-          case "${{ inputs.image }}" in
+          case "${{ inputs.image-type }}" in
               all) SUFFIX=python3-r-ubuntu
                   ;;
               python) SUFFIX=python3-ubuntu
@@ -93,10 +94,18 @@ jobs:
           TAG=scala${{ inputs.scala }}-java${{ inputs.java }}-$SUFFIX
 
           REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          TEST_REPO=localhost:5000/$REPO_OWNER/spark-docker
+          if [ "${{ inputs.repository }}" != "" ]; then
+            TEST_REPO=${{ inputs.repository }}
+          else
+            TEST_REPO=localhost:5000/$REPO_OWNER/spark-docker
+          fi
           IMAGE_NAME=spark
           IMAGE_PATH=${{ inputs.spark }}/$TAG
-          UNIQUE_IMAGE_TAG=${{ inputs.spark }}-$TAG
+          if [ "${{ inputs.image-tag }}" != "" ]; then
+            UNIQUE_IMAGE_TAG=${{ inputs.image-tag }}
+          else
+            UNIQUE_IMAGE_TAG=${{ inputs.spark }}-$TAG
+          fi
           IMAGE_URL=$TEST_REPO/$IMAGE_NAME:$UNIQUE_IMAGE_TAG
 
           PUBLISH_REPO=${{ inputs.repository }}
@@ -127,7 +136,19 @@ jobs:
           echo "PUBLISH_REPO:"${PUBLISH_REPO}
           echo "PUBLISH_IMAGE_URL:"${PUBLISH_IMAGE_URL}
 
+      - name: Set up QEMU
+        if: ${{ inputs.build }}
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        if: ${{ inputs.build }}
+        uses: docker/setup-buildx-action@v2
+        with:
+          # This required by local registry
+          driver-opts: network=host
+
       - name: Build and push test image
+        if: ${{ inputs.build }}
         uses: docker/build-push-action@v2
         with:
           context: ${{ env.IMAGE_PATH }}
@@ -211,7 +232,7 @@ jobs:
           OPTS+="-Dspark.kubernetes.test.pythonImage=${IMAGE_NAME} "
           OPTS+="-Dspark.kubernetes.test.rImage=${IMAGE_NAME} "
 
-          if [ "${{ inputs.image }}" = "all" ]; then
+          if [ "${{ inputs.image-type }}" = "all" ]; then
             # Prepare test jar for client tests
             CONTAINER_TMP_NAME=spark-example-image
             docker create -ti --name $CONTAINER_TMP_NAME ${{ env.IMAGE_URL }} bash
@@ -229,12 +250,12 @@ jobs:
             build/sbt $OPTS 'kubernetes-integration-tests/testOnly -- -z "Run SparkPi"'
 
             # Run basic test for PySpark image
-            if [ "${{ inputs.image }}" = "python" ]; then
+            if [ "${{ inputs.image-type }}" = "python" ]; then
               build/sbt $OPTS 'kubernetes-integration-tests/testOnly -- -z "Run PySpark"'
             fi
 
             # Run basic test for SparkR image
-            if [ "${{ inputs.image }}" = "r" ]; then
+            if [ "${{ inputs.image-type }}" = "r" ]; then
               OPTS+="-Psparkr -Dtest.include.tags=r "
               build/sbt $OPTS 'kubernetes-integration-tests/testOnly'
             fi
