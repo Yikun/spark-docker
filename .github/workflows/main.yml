@@ -165,7 +165,7 @@ jobs:
 
       - name: Build - Build the base image
         # Don't need to build the base image when publish
-        if: ${{ inputs.build and !input.publish }}
+        if: ${{ inputs.build && !inputs.publish }}
         uses: docker/build-push-action@v3
         with:
           context: ${{ env.BASE_IMAGE_PATH }}
