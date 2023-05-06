@@ -107,7 +107,12 @@ jobs:
             TEST_REPO=${{ inputs.repository }}
             UNIQUE_IMAGE_TAG=${{ inputs.image-tag }}
           fi
+
+          # We can't use the real image for build because we haven't publish the image yet.
+          # The base image for build, it's something like localhost:5000/$REPO_OWNER/spark-docker/spark:3.3.0-scala2.12-java11-ubuntu
           BASE_IMAGE_URL=$TEST_REPO/$IMAGE_NAME:$BASE_IMGAE_TAG
+          # The base image for publish, it's a real image like apache/spark:3.3.0-scala2.12-java11-ubuntu
+          PUBLISH_BASE_IMAGE_URL=${PUBLISH_REPO}/${IMAGE_NAME}:$BASE_IMGAE_TAG
           IMAGE_URL=$TEST_REPO/$IMAGE_NAME:$UNIQUE_IMAGE_TAG
 
           PUBLISH_REPO=${{ inputs.repository }}
@@ -130,6 +135,7 @@ jobs:
 
           echo "PUBLISH_REPO=${PUBLISH_REPO}" >> $GITHUB_ENV
           echo "PUBLISH_IMAGE_URL=${PUBLISH_IMAGE_URL}" >> $GITHUB_ENV
+          echo "PUBLISH_BASE_IMAGE_URL=${PUBLISH_BASE_IMAGE_URL}" >> $GITHUB_ENV
 
       - name: Prepare - Print Image tags
         run: |
@@ -157,7 +163,7 @@ jobs:
           driver-opts: network=host
 
       - name: Build - Build the base image
-        if: ${{ inputs.build }}
+        if: ${{ inputs.build && !inputs.publish }}
         uses: docker/build-push-action@v3
         with:
           context: ${{ env.BASE_IMAGE_PATH }}
@@ -306,7 +312,7 @@ jobs:
         if: ${{ inputs.publish }}
         uses: docker/build-push-action@v3
         with:
-          build-args: BASE_IMAGE=${{ env.BASE_IMAGE_URL }}
+          build-args: BASE_IMAGE=${{ env.PUBLISH_BASE_IMAGE_URL }}
           context: ${{ env.IMAGE_PATH }}
           push: true
           tags: ${{ env.PUBLISH_IMAGE_URL }}
