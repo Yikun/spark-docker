@@ -107,7 +107,14 @@ jobs:
             TEST_REPO=${{ inputs.repository }}
             UNIQUE_IMAGE_TAG=${{ inputs.image-tag }}
           fi
+
+          # We can't use the real image for build because we haven't publish the image yet.
+          # The base image for build, it's something like localhost:5000/$REPO_OWNER/spark-docker/spark:3.3.0-scala2.12-java11-ubuntu
           BASE_IMAGE_URL=$TEST_REPO/$IMAGE_NAME:$BASE_IMGAE_TAG
+          # The base image for publish, it's a real image like apache/spark:3.3.0-scala2.12-java11-ubuntu
+          if [ "${{ inputs.publish }}" == "true" ]; then
+            BASE_IMAGE_URL=${PUBLISH_REPO}/${IMAGE_NAME}:$BASE_IMGAE_TAG
+          fi
           IMAGE_URL=$TEST_REPO/$IMAGE_NAME:$UNIQUE_IMAGE_TAG
 
           PUBLISH_REPO=${{ inputs.repository }}
