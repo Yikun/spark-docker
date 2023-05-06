@@ -47,6 +47,7 @@ on:
         - ghcr.io/apache/spark-docker
         # Dockerhub: This required the DOCKERHUB_TOKEN and DOCKERHUB_USER (Spark Committer)
         - apache
+        - ghcr.io/yikun/spark-docker
 
 jobs:
   run-build:
