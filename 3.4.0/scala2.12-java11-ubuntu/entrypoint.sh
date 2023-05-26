@@ -19,18 +19,22 @@
 # Check whether there is a passwd entry for the container UID
 myuid=$(id -u)
 mygid=$(id -g)
-# turn off -e for getent because it will return error code in anonymous uid case
-set +e
-uidentry=$(getent passwd $myuid)
-set -e
 
 # If there is no passwd entry for the container UID, attempt to create one
-if [ -z "$uidentry" ] ; then
-    if [ -w /etc/passwd ] ; then
-        echo "$myuid:x:$myuid:$mygid:${SPARK_USER_NAME:-anonymous uid}:$SPARK_HOME:/bin/false" >> /etc/passwd
-    else
-        echo "Container ENTRYPOINT failed to add passwd entry for anonymous UID"
-    fi
+if ! getent passwd "$myuid" &> /dev/null; then
+    # see if we can find a suitable "libnss_wrapper.so" (https://salsa.debian.org/sssd-team/nss-wrapper/-/commit/b9925a653a54e24d09d9b498a2d913729f7abb15)
+		local wrapper
+		for wrapper in {/usr,}/lib{/*,}/libnss_wrapper.so; do
+			if [ -s "$wrapper" ]; then
+				NSS_WRAPPER_PASSWD="$(mktemp)"
+				NSS_WRAPPER_GROUP="$(mktemp)"
+				export LD_PRELOAD="$wrapper" NSS_WRAPPER_PASSWD NSS_WRAPPER_GROUP
+				local gid; gid="$(id -g)"
+				printf 'spark:x:%s:%s:${SPARK_USER_NAME:-anonymous uid}:%s:/bin/false\n' "$myuid" "$mygid" "$SPARK_HOME" > "$NSS_WRAPPER_PASSWD"
+				printf 'spark:x:%s:\n' "$mygid" > "$NSS_WRAPPER_GROUP"
+				break
+			fi
+		done
 fi
 
 if [ -z "$JAVA_HOME" ]; then
@@ -99,6 +103,11 @@ case "$1" in
     ;;
 
   *)
+    # unset/cleanup "nss_wrapper" bits
+    if [[ "${LD_PRELOAD:-}" == */libnss_wrapper.so ]]; then
+      rm -f "$NSS_WRAPPER_PASSWD" "$NSS_WRAPPER_GROUP"
+      unset LD_PRELOAD NSS_WRAPPER_PASSWD NSS_WRAPPER_GROUP
+    fi
     # Non-spark-on-k8s command provided, proceeding in pass-through mode...
     CMD=("$@")
     ;;

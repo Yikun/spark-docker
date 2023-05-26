@@ -33,7 +33,6 @@ RUN set -ex; \
     touch /opt/spark/RELEASE; \
     chown -R spark:spark /opt/spark; \
     echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su; \
-    chgrp root /etc/passwd && chmod ug+rw /etc/passwd; \
     rm -rf /var/cache/apt/*; \
     rm -rf /var/lib/apt/lists/*
 
