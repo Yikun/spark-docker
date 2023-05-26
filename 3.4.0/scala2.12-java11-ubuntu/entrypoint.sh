@@ -19,6 +19,7 @@
 # Check whether there is a passwd entry for the container UID
 myuid=$(id -u)
 mygid=$(id -g)
+username=${SPARK_USER_NAME:-spark}
 
 # If there is no passwd entry for the container UID, attempt to create one
 if ! getent passwd "$myuid" &> /dev/null; then
@@ -30,8 +31,8 @@ if ! getent passwd "$myuid" &> /dev/null; then
 				NSS_WRAPPER_GROUP="$(mktemp)"
 				export LD_PRELOAD="$wrapper" NSS_WRAPPER_PASSWD NSS_WRAPPER_GROUP
 				local gid; gid="$(id -g)"
-				printf 'spark:x:%s:%s:${SPARK_USER_NAME:-anonymous uid}:%s:/bin/false\n' "$myuid" "$mygid" "$SPARK_HOME" > "$NSS_WRAPPER_PASSWD"
-				printf 'spark:x:%s:\n' "$mygid" > "$NSS_WRAPPER_GROUP"
+				printf '%s:x:%s:%s:${SPARK_USER_NAME:-anonymous uid}:%s:/bin/false\n' "$username" "$myuid" "$mygid" "$SPARK_HOME" > "$NSS_WRAPPER_PASSWD"
+				printf '%s:x:%s:\n' "$username" "$mygid" > "$NSS_WRAPPER_GROUP"
 				break
 			fi
 		done
@@ -116,7 +117,7 @@ esac
 # Switch to spark if no USER specified (root by default) otherwise use USER directly
 switch_spark_if_root() {
   if [ $(id -u) -eq 0 ]; then
-    echo gosu spark
+    echo gosu $username
   fi
 }
 
