@@ -14,19 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-FROM eclipse-temurin:11-jre-focal
+FROM openeuler/openeuler:22.03-lts
 
 ARG spark_uid=185
 
-RUN groupadd --system --gid=${spark_uid} spark && \
-    useradd --system --uid=${spark_uid} --gid=spark spark
 
 RUN set -ex && \
-    apt-get update && \
+    dnf update -y && \
     ln -s /lib /lib64 && \
-    apt install -y gnupg2 wget bash tini libc6 libpam-modules krb5-user libnss3 procps net-tools gosu && \
-    apt install -y python3 python3-pip && \
-    apt install -y r-base r-base-dev && \
+    dnf install -y gnupg2 wget bash krb5 procps net-tools shadow dpkg java-11-openjdk && \
+    groupadd --system --gid=${spark_uid} spark && \
+    useradd --system --uid=${spark_uid} --gid=spark spark && \
+    dnf install -y python3 python3-pip && \
     mkdir -p /opt/spark && \
     mkdir /opt/spark/python && \
     mkdir -p /opt/spark/examples && \
@@ -37,9 +36,14 @@ RUN set -ex && \
     ln -sv /bin/bash /bin/sh && \
     echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su && \
     chgrp root /etc/passwd && chmod ug+rw /etc/passwd && \
-    rm -rf /var/cache/apt/* && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/cache/dnf/*
 
+# Grab gosu for easy step-down from root
+ENV GOSU_VERSION 1.14
+RUN set -ex; \
+  wget -nv -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture)"; \
+  chmod +x /usr/local/bin/gosu; \
+  gosu nobody true
 # Install Apache Spark
 # https://downloads.apache.org/spark/KEYS
 ENV SPARK_TGZ_URL=https://archive.apache.org/dist/spark/spark-3.3.1/spark-3.3.1-bin-hadoop3.tgz \
@@ -50,13 +54,6 @@ RUN set -ex; \
     export SPARK_TMP="$(mktemp -d)"; \
     cd $SPARK_TMP; \
     wget -nv -O spark.tgz "$SPARK_TGZ_URL"; \
-    wget -nv -O spark.tgz.asc "$SPARK_TGZ_ASC_URL"; \
-    export GNUPGHOME="$(mktemp -d)"; \
-    gpg --keyserver hkps://keys.openpgp.org --recv-key "$GPG_KEY" || \
-    gpg --keyserver hkps://keyserver.ubuntu.com --recv-keys "$GPG_KEY"; \
-    gpg --batch --verify spark.tgz.asc spark.tgz; \
-    gpgconf --kill all; \
-    rm -rf "$GNUPGHOME" spark.tgz.asc; \
     \
     tar -xf spark.tgz --strip-components=1; \
     chown -R spark:spark .; \

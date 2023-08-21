@@ -111,4 +111,4 @@ switch_spark_if_root() {
 }
 
 # Execute the container CMD under tini for better hygiene
-exec $(switch_spark_if_root) /usr/bin/tini -s -- "${CMD[@]}"
+exec $(switch_spark_if_root) "${CMD[@]}"
